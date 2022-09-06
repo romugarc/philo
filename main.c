@@ -10,7 +10,7 @@ int	parse_error(int narg, char **argv)
 		return (1);
 	i = 1;
 	j = 0;
-	while (argv[i] != '\0')
+	while (argv[i] != NULL)
 	{
 		j = 0;
 		while (argv[i][j] != '\0')
@@ -26,6 +26,6 @@ int	parse_error(int narg, char **argv)
 
 int	main(int argc, char **argv)
 {
-	printf("%d\n", argc);
+	parse_error(argc, argv);
 	return (0);
 }
