@@ -1,6 +1,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+s_args	args
+{
+	int	nb_philo;
+	int	time_eat;
+	int	time_die;
+}	t_args;
+
 int	parse_error(int narg, char **argv)
 {
 	int	i;
@@ -24,8 +31,18 @@ int	parse_error(int narg, char **argv)
 	return (0);
 }
 
+t_args	init_args(nb_arg, argv)
+{
+	return ();
+}
+
 int	main(int argc, char **argv)
 {
+	int	nb_arg;
+	t_args	args;
+
+	nb_arg = argc - 1;
 	parse_error(argc, argv);
+	init_args(nb_arg, argv);
 	return (0);
 }
