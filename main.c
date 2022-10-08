@@ -48,14 +48,20 @@ int parse_args(int nb_arg, char** argv, t_arguments *args)
 
 void	take_fork(t_philo *args_philo)
 {
+	struct timeval tv;
+
+	gettimeofday(&tv, NULL);
 	pthread_mutex_lock(args_philo->own_fork);
 	pthread_mutex_lock(args_philo->right_fork);
-	printf("%d has taken a fork\n", args_philo->philo_seat);
+	printf("%ld %d has taken a fork\n", (1000 * tv.tv_sec + tv.tv_usec / 1000) - args_philo->zero_time, args_philo->philo_seat);
 }
 
 void	eating(t_philo *args_philo)
 {
-	printf("%d is eating\n", args_philo->philo_seat);
+	struct timeval tv;
+	gettimeofday(&tv, NULL);
+	args_philo->last_update = tv.tv_usec / 1000;
+	printf("%ld %d is eating\n", (1000 * tv.tv_sec + tv.tv_usec / 1000) - args_philo->zero_time, args_philo->philo_seat);
 	args_philo->nb_eat += 1;
 	usleep(args_philo->time_eat * 1000);
 	pthread_mutex_unlock(args_philo->own_fork);
@@ -64,33 +70,68 @@ void	eating(t_philo *args_philo)
 
 void	sleeping(t_philo *args_philo)
 {
-	printf("%d is sleeping\n", args_philo->philo_seat);
+	struct timeval tv;
+
+	gettimeofday(&tv, NULL);
+	printf("%ld %d is sleeping\n", (1000 * tv.tv_sec + tv.tv_usec / 1000) - args_philo->zero_time, args_philo->philo_seat);
 	usleep(args_philo->time_sleep * 1000);
 }
 
 void	thinking(t_philo *args_philo)
 {
-	printf("%d is thinking\n", args_philo->philo_seat);
+	struct timeval tv;
+
+	gettimeofday(&tv, NULL);
+	printf("%ld %d is thinking\n", (1000 * tv.tv_sec + tv.tv_usec / 1000) - args_philo->zero_time, args_philo->philo_seat);
 }
 
-void	starved(t_philo *args_philo)
+void	starved(t_philo *dead_philo)
 {
-	printf("%d died\n", args_philo->philo_seat);
+	struct timeval tv;
+
+	gettimeofday(&tv, NULL);
+	printf("%ld %d died\n", (1000 * tv.tv_sec + tv.tv_usec / 1000) - dead_philo->zero_time, dead_philo->philo_seat);
 }
 
 void	*start_routine(void *arg)
 {
+	struct timeval tv;
 	t_philo *a;
 	int		b;
 
-	a = (t_philo *)a;
-	b = a->time_die;
-	//take_fork(a);
-	/*eating((t_philo *)arg);
-	sleeping((t_philo *)arg);
-	thinking((t_philo *)arg);
-	*/printf("s");
-	printf("%d\n", b);
+	usleep(10);
+	a = (t_philo *)arg;
+	b = a->philo_seat;
+	while (a->is_dead != 1)
+	{
+		gettimeofday(&tv, NULL);
+		if (tv.tv_usec / 1000 - a->last_update > a->time_die)
+			a->is_dead = 1;
+		a->last_update = tv.tv_usec / 1000;
+		if (a->is_dead == 0)
+			take_fork(a);
+		gettimeofday(&tv, NULL);
+		if (tv.tv_usec / 1000 - a->last_update > a->time_die)
+			a->is_dead = 1;
+		a->last_update = tv.tv_usec / 1000;
+		if (a->is_dead == 0)
+			eating(a);
+		gettimeofday(&tv, NULL);
+		if (tv.tv_usec / 1000 - a->last_update > a->time_die)
+			a->is_dead = 1;
+		a->last_update = tv.tv_usec / 1000;
+		if (a->is_dead == 0)
+			sleeping(a);
+		gettimeofday(&tv, NULL);
+		if (tv.tv_usec / 1000 - a->last_update > a->time_die)
+			a->is_dead = 1;
+		a->last_update = tv.tv_usec / 1000;
+		if (a->is_dead == 0)
+			thinking(a);
+	}
+	return (NULL);
+	//printf("s");
+	//printf("%d\n", b);
 }
 
 void	create_mutex(t_arguments *args)
@@ -112,6 +153,7 @@ void	create_mutex(t_arguments *args)
 
 void	create_philos(t_arguments *args)
 {
+	struct timeval tv;
 	t_philo *philos;
 	int		i;
 
@@ -132,6 +174,10 @@ void	create_philos(t_arguments *args)
 			philos[i].right_fork = &args->mutexes[i - 1];
 		else
 			philos[i].right_fork = &args->mutexes[args->nb_philo];
+		philos[i].zero_time = args->big_bang_time;
+		gettimeofday(&tv, NULL);
+		philos[i].last_update = tv.tv_usec / 1000;
+		philos[i].is_dead = 0;
 		i++;
 	}
 	args->philos = philos;
@@ -148,11 +194,34 @@ void	create_threads(t_arguments *args)
 	i = 0;
 	while (i < args->nb_philo)
 	{
-		printf("%d\n", args->philos[i].philo_seat);
 		pthread_create(&thread[i], NULL, start_routine, (void *)&args->philos[i]);
 		i++;
 	}
 	args->threads = thread;
+}
+
+int	check_deaths(t_arguments *args)
+{
+	int	i;
+	int	j;
+
+	i = 0;
+	while (i < args->nb_philo)
+	{
+		if (args->philos[i].is_dead == 1)
+		{
+			j = 0;
+			while (j < args->nb_philo)
+			{
+				args->philos[j].is_dead = 1;
+				j++;
+			}
+			starved(&args->philos[i]);
+			return (1);
+		}
+		i++;
+	}
+	return (0);
 }
 
 int	main(int argc, char **argv)
@@ -160,7 +229,7 @@ int	main(int argc, char **argv)
 	int			nb_arg;
 	int			i;
 	t_arguments args;
-	t_philo *sauce;
+	struct timeval tv;
 
 	if (parse_error(argc, argv) == 1)
 		return (0);
@@ -168,14 +237,12 @@ int	main(int argc, char **argv)
 	if (parse_args(nb_arg, argv, &args) == 1)
 		return (0);
 	create_mutex(&args);
+	gettimeofday(&tv, NULL);
+	args.big_bang_time = 1000 * tv.tv_sec + tv.tv_usec / 1000;
 	create_philos(&args);
-	i = 0;
-	while (i < args.nb_philo)
-	{
-		printf("%d\n", args.philos[i].philo_seat);
-		i++;
-	}
 	create_threads(&args);
+	while (check_deaths(&args) == 0)
+	{}
 	i = 0;
 	while (i < args.nb_philo)
 	{
