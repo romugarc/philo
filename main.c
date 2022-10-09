@@ -46,16 +46,39 @@ int parse_args(int nb_arg, char** argv, t_arguments *args)
 	return (0);
 }
 
+void	ft_usleep(int time_ms)
+{
+	struct timeval tv;
+	long	start_time;
+	long	delayed_time;
+
+	gettimeofday(&tv, NULL);
+	start_time = 1000 * tv.tv_sec + tv.tv_usec / 1000;
+	delayed_time = start_time;
+	while (delayed_time - start_time < time_ms)
+	{
+		usleep(time_ms / 10);
+		gettimeofday(&tv, NULL);
+		delayed_time = 1000 * tv.tv_sec + tv.tv_usec / 1000;
+	}
+}
+
 void	take_fork(t_philo *args_philo)
 {
 	struct timeval tv;
 
 	gettimeofday(&tv, NULL);
 	pthread_mutex_lock(args_philo->own_fork);
-	pthread_mutex_lock(args_philo->right_fork);
+	if (args_philo->nb_philo != 1)
+		pthread_mutex_lock(args_philo->right_fork);
 	pthread_mutex_lock(&args_philo->printing);
 	if (args_philo->is_dead == 0)
 		printf("%ld %d has taken a fork\n", (1000 * tv.tv_sec + tv.tv_usec / 1000) - args_philo->zero_time, args_philo->philo_seat);
+	else
+	{
+		pthread_mutex_unlock(args_philo->own_fork);
+		pthread_mutex_unlock(args_philo->right_fork);
+	}
 	pthread_mutex_unlock(&args_philo->printing);
 }
 
@@ -69,7 +92,7 @@ void	eating(t_philo *args_philo)
 	pthread_mutex_unlock(&args_philo->printing);
 	if (args_philo->nb_eat > 0)
 		args_philo->nb_eat -= 1;
-	usleep(args_philo->time_eat * 900);
+	ft_usleep(args_philo->time_eat);
 	pthread_mutex_unlock(args_philo->own_fork);
 	pthread_mutex_unlock(args_philo->right_fork);
 }
@@ -82,7 +105,7 @@ void	sleeping(t_philo *args_philo)
 	pthread_mutex_lock(&args_philo->printing);
 	printf("%ld %d is sleeping\n", (1000 * tv.tv_sec + tv.tv_usec / 1000) - args_philo->zero_time, args_philo->philo_seat);
 	pthread_mutex_unlock(&args_philo->printing);
-	usleep(args_philo->time_sleep * 900);
+	ft_usleep(args_philo->time_sleep);
 }
 
 void	thinking(t_philo *args_philo)
@@ -181,7 +204,7 @@ void	create_philos(t_arguments *args)
 		if (i != 0)
 			philos[i].right_fork = &args->mutexes[i - 1];
 		else
-			philos[i].right_fork = &args->mutexes[args->nb_philo];
+			philos[i].right_fork = &args->mutexes[args->nb_philo - 1];
 		philos[i].zero_time = args->big_bang_time;
 		gettimeofday(&tv, NULL);
 		philos[i].last_update = 1000 * tv.tv_sec + tv.tv_usec / 1000;
@@ -233,10 +256,13 @@ int	check_deaths(t_arguments *args)
 	int	j;
 
 	i = 0;
+	//printf("%d\n", 1);
 	while (i < args->nb_philo)
-	{
+	{	
+		//printf("%d\n", 2);
 		if (args->philos[i].is_dead == 1)
 		{
+			//printf("%d\n", 3);
 			j = 0;
 			while (j < args->nb_philo)
 			{
