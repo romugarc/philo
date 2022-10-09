@@ -53,17 +53,23 @@ void	take_fork(t_philo *args_philo)
 	gettimeofday(&tv, NULL);
 	pthread_mutex_lock(args_philo->own_fork);
 	pthread_mutex_lock(args_philo->right_fork);
-	printf("%ld %d has taken a fork\n", (1000 * tv.tv_sec + tv.tv_usec / 1000) - args_philo->zero_time, args_philo->philo_seat);
+	pthread_mutex_lock(&args_philo->printing);
+	if (args_philo->is_dead == 0)
+		printf("%ld %d has taken a fork\n", (1000 * tv.tv_sec + tv.tv_usec / 1000) - args_philo->zero_time, args_philo->philo_seat);
+	pthread_mutex_unlock(&args_philo->printing);
 }
 
 void	eating(t_philo *args_philo)
 {
 	struct timeval tv;
 	gettimeofday(&tv, NULL);
-	args_philo->last_update = tv.tv_usec / 1000;
+	args_philo->last_update = 1000 * tv.tv_sec + tv.tv_usec / 1000;
+	pthread_mutex_lock(&args_philo->printing);
 	printf("%ld %d is eating\n", (1000 * tv.tv_sec + tv.tv_usec / 1000) - args_philo->zero_time, args_philo->philo_seat);
-	args_philo->nb_eat += 1;
-	usleep(args_philo->time_eat * 1000);
+	pthread_mutex_unlock(&args_philo->printing);
+	if (args_philo->nb_eat > 0)
+		args_philo->nb_eat -= 1;
+	usleep(args_philo->time_eat * 900);
 	pthread_mutex_unlock(args_philo->own_fork);
 	pthread_mutex_unlock(args_philo->right_fork);
 }
@@ -73,8 +79,10 @@ void	sleeping(t_philo *args_philo)
 	struct timeval tv;
 
 	gettimeofday(&tv, NULL);
+	pthread_mutex_lock(&args_philo->printing);
 	printf("%ld %d is sleeping\n", (1000 * tv.tv_sec + tv.tv_usec / 1000) - args_philo->zero_time, args_philo->philo_seat);
-	usleep(args_philo->time_sleep * 1000);
+	pthread_mutex_unlock(&args_philo->printing);
+	usleep(args_philo->time_sleep * 900);
 }
 
 void	thinking(t_philo *args_philo)
@@ -82,7 +90,9 @@ void	thinking(t_philo *args_philo)
 	struct timeval tv;
 
 	gettimeofday(&tv, NULL);
+	pthread_mutex_lock(&args_philo->printing);
 	printf("%ld %d is thinking\n", (1000 * tv.tv_sec + tv.tv_usec / 1000) - args_philo->zero_time, args_philo->philo_seat);
+	pthread_mutex_unlock(&args_philo->printing);
 }
 
 void	starved(t_philo *dead_philo)
@@ -90,48 +100,45 @@ void	starved(t_philo *dead_philo)
 	struct timeval tv;
 
 	gettimeofday(&tv, NULL);
+	pthread_mutex_lock(&dead_philo->printing);
 	printf("%ld %d died\n", (1000 * tv.tv_sec + tv.tv_usec / 1000) - dead_philo->zero_time, dead_philo->philo_seat);
+	pthread_mutex_unlock(&dead_philo->printing);
+}
+
+int	check_own_death(t_philo *philo)
+{
+	struct timeval tv;
+
+	gettimeofday(&tv, NULL);
+	if ((1000 * tv.tv_sec + tv.tv_usec / 1000) - philo->last_update > philo->time_die)
+	{
+		philo->is_dead = 1;
+		return (1);
+	}
+	return (0);
 }
 
 void	*start_routine(void *arg)
 {
-	struct timeval tv;
 	t_philo *a;
-	int		b;
 
-	usleep(10);
 	a = (t_philo *)arg;
-	b = a->philo_seat;
-	while (a->is_dead != 1)
+	while (a->is_dead != 1 && a->nb_eat != 0)
 	{
-		gettimeofday(&tv, NULL);
-		if (tv.tv_usec / 1000 - a->last_update > a->time_die)
-			a->is_dead = 1;
-		a->last_update = tv.tv_usec / 1000;
-		if (a->is_dead == 0)
-			take_fork(a);
-		gettimeofday(&tv, NULL);
-		if (tv.tv_usec / 1000 - a->last_update > a->time_die)
-			a->is_dead = 1;
-		a->last_update = tv.tv_usec / 1000;
-		if (a->is_dead == 0)
-			eating(a);
-		gettimeofday(&tv, NULL);
-		if (tv.tv_usec / 1000 - a->last_update > a->time_die)
-			a->is_dead = 1;
-		a->last_update = tv.tv_usec / 1000;
-		if (a->is_dead == 0)
-			sleeping(a);
-		gettimeofday(&tv, NULL);
-		if (tv.tv_usec / 1000 - a->last_update > a->time_die)
-			a->is_dead = 1;
-		a->last_update = tv.tv_usec / 1000;
-		if (a->is_dead == 0)
-			thinking(a);
+		if (check_own_death(a) == 1 || a->is_dead == 1 || a->nb_eat == 0)
+			return (NULL);
+		take_fork(a);
+		if (check_own_death(a) == 1 || a->is_dead == 1 || a->nb_eat == 0)
+			return (NULL);
+		eating(a);
+		if (check_own_death(a) == 1 || a->is_dead == 1 || a->nb_eat == 0)
+			return (NULL);
+		sleeping(a);
+		if (check_own_death(a) == 1 || a->is_dead == 1 || a->nb_eat == 0)
+			return (NULL);
+		thinking(a);
 	}
 	return (NULL);
-	//printf("s");
-	//printf("%d\n", b);
 }
 
 void	create_mutex(t_arguments *args)
@@ -148,6 +155,7 @@ void	create_mutex(t_arguments *args)
 		pthread_mutex_init(&mutex[i], NULL);
 		i++;
 	}
+	pthread_mutex_init(&args->printing, NULL);
 	args->mutexes = mutex;
 }
 
@@ -176,8 +184,9 @@ void	create_philos(t_arguments *args)
 			philos[i].right_fork = &args->mutexes[args->nb_philo];
 		philos[i].zero_time = args->big_bang_time;
 		gettimeofday(&tv, NULL);
-		philos[i].last_update = tv.tv_usec / 1000;
+		philos[i].last_update = 1000 * tv.tv_sec + tv.tv_usec / 1000;
 		philos[i].is_dead = 0;
+		philos[i].printing = args->printing;
 		i++;
 	}
 	args->philos = philos;
@@ -198,6 +207,24 @@ void	create_threads(t_arguments *args)
 		i++;
 	}
 	args->threads = thread;
+}
+
+int	count_eat(t_arguments *args)
+{
+	int	i;
+	int	j;
+
+	i = 0;
+	j = 0;
+	while (i < args->nb_philo)
+	{
+		if (args->philos[i].nb_eat == 0)
+			j = j + 1;
+		i++;
+	}
+	if (j == args->nb_philo)
+		return (1);
+	return (0);
 }
 
 int	check_deaths(t_arguments *args)
@@ -241,23 +268,36 @@ int	main(int argc, char **argv)
 	args.big_bang_time = 1000 * tv.tv_sec + tv.tv_usec / 1000;
 	create_philos(&args);
 	create_threads(&args);
-	while (check_deaths(&args) == 0)
-	{}
-	i = 0;
-	while (i < args.nb_philo)
+	while (1)
 	{
-		pthread_join(args.threads[i], NULL);
-		i++;
+		if (check_deaths(&args) == 1 || count_eat(&args) == 1)
+		{
+			pthread_mutex_lock(&args.printing);
+			//printf("death\t");
+			i = 0;
+			while (i < args.nb_philo)
+			{
+				//printf("join\t");
+				pthread_detach(args.threads[i]);
+				//printf("join2\t");
+				i++;
+			}
+			i = 0;
+			while (i < args.nb_philo)
+			{
+				//printf("mutex\t");
+				pthread_mutex_unlock(&args.mutexes[i]);
+				pthread_mutex_destroy(&args.mutexes[i]);
+				i++;
+			}
+			pthread_mutex_unlock(&args.printing);
+			pthread_mutex_destroy(&args.printing);
+			free(args.philos);
+			free(args.mutexes);
+			free(args.threads);
+			//printf("frees\t");
+			return (0);
+		}
 	}
-	i = 0;
-	while (i < args.nb_philo)
-	{
-		pthread_mutex_unlock(&args.mutexes[i]);
-		pthread_mutex_destroy(&args.mutexes[i]);
-		i++;
-	}
-	free(args.philos);
-	free(args.mutexes);
-	free(args.threads);
 	return (0);
 }
