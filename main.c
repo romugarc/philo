@@ -215,23 +215,6 @@ void	create_philos(t_arguments *args)
 	args->philos = philos;
 }
 
-void	create_threads(t_arguments *args)
-{
-	pthread_t 	*thread;
-	int			i;
-
-	thread = malloc(sizeof(pthread_t) * args->nb_philo);
-	if (!thread)
-		return ;
-	i = 0;
-	while (i < args->nb_philo)
-	{
-		pthread_create(&thread[i], NULL, start_routine, (void *)&args->philos[i]);
-		i++;
-	}
-	args->threads = thread;
-}
-
 int	count_eat(t_arguments *args)
 {
 	int	i;
@@ -277,6 +260,68 @@ int	check_deaths(t_arguments *args)
 	return (0);
 }
 
+void	*monitor_deaths(void *check)
+{
+	int	i;
+	int	j;
+	t_arguments	*args;
+
+	args = (t_arguments *)check;
+	i = 0;
+	//printf("%d\n", 1);
+	while (1)
+	{
+		if (check_deaths(args) == 1)
+			break ;
+	}
+	return (NULL);
+}
+
+void	*monitor_eat(void *count)
+{
+	int	i;
+	int	j;
+	t_arguments	*args;
+
+	args = (t_arguments *)count;
+	i = 0;
+	j = 0;
+	while (1)
+	{
+		if (count_eat(args) == 1)
+			break ;
+	}
+	return (NULL);
+}
+
+void	create_threads(t_arguments *args)
+{
+	//pthread_t	monitor;
+	//pthread_t	eats;
+	pthread_t 	*thread;
+	int			i;
+
+	thread = malloc(sizeof(pthread_t) * args->nb_philo);
+	if (!thread)
+		return ;
+	i = 0;
+	while (i < args->nb_philo)
+	{
+		pthread_create(&thread[i], NULL, start_routine, (void *)&args->philos[i]);
+		i++;
+	}
+/*	pthread_create(&monitor, NULL, monitor_deaths, &args->philos);
+	pthread_join(monitor, NULL);
+	if (args->nb_eat > 0)
+	{
+		pthread_create(&eats, NULL, monitor_eat, &args->philos);
+		pthread_join(eats, NULL);
+	}*/
+	args->threads = thread;
+}
+
+
+
 int	main(int argc, char **argv)
 {
 	int			nb_arg;
@@ -295,7 +340,7 @@ int	main(int argc, char **argv)
 	create_philos(&args);
 	create_threads(&args);
 	while (1)
-	{
+ 	{
 		if (check_deaths(&args) == 1 || count_eat(&args) == 1)
 		{
 			pthread_mutex_lock(&args.printing);
