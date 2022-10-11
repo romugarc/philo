@@ -32,6 +32,8 @@ typedef struct s_arguments
     pthread_mutex_t printing;
     pthread_mutex_t *mutexes;
     pthread_t       *threads;
+//    pthread_t       monitor;
+ //   pthread_t       eats;
     t_philo         *philos;
 }   t_arguments;
 
