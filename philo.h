@@ -16,6 +16,9 @@ typedef struct s_philo
     long    last_update;
     int is_dead;
     long    zero_time;
+    pthread_mutex_t counting;
+    pthread_mutex_t death_check;
+    pthread_mutex_t updating;
     pthread_mutex_t printing;
     pthread_mutex_t *own_fork;
     pthread_mutex_t *right_fork;

@@ -68,18 +68,28 @@ void	take_fork(t_philo *args_philo)
 	struct timeval tv;
 
 	gettimeofday(&tv, NULL);
-	pthread_mutex_lock(args_philo->own_fork);
-	if (args_philo->nb_philo > 1)
+	if (((args_philo->philo_seat % 2) == 1) || (args_philo->philo_seat == args_philo->nb_philo - 1))
+	{
 		pthread_mutex_lock(args_philo->right_fork);
+		pthread_mutex_lock(args_philo->own_fork);
+	}
+	else
+	{
+		pthread_mutex_lock(args_philo->own_fork);
+	//if (args_philo->nb_philo > 1)
+		pthread_mutex_lock(args_philo->right_fork);
+	}
 	pthread_mutex_lock(&args_philo->printing);
+	pthread_mutex_lock(&args_philo->death_check);
 	if (args_philo->is_dead == 0)
 		printf("%ld %d has taken a fork\n", (1000 * tv.tv_sec + tv.tv_usec / 1000) - args_philo->zero_time, args_philo->philo_seat);
 	else
 	{
 		pthread_mutex_unlock(args_philo->own_fork);
-		if (args_philo->nb_philo > 1)
+		//if (args_philo->nb_philo > 1)
 			pthread_mutex_unlock(args_philo->right_fork);
 	}
+	pthread_mutex_unlock(&args_philo->death_check);
 	pthread_mutex_unlock(&args_philo->printing);
 }
 
@@ -87,12 +97,16 @@ void	eating(t_philo *args_philo)
 {
 	struct timeval tv;
 	gettimeofday(&tv, NULL);
+	pthread_mutex_lock(&args_philo->updating);
 	args_philo->last_update = 1000 * tv.tv_sec + tv.tv_usec / 1000;
+	pthread_mutex_unlock(&args_philo->updating);
 	pthread_mutex_lock(&args_philo->printing);
 	printf("%ld %d is eating\n", (1000 * tv.tv_sec + tv.tv_usec / 1000) - args_philo->zero_time, args_philo->philo_seat);
 	pthread_mutex_unlock(&args_philo->printing);
+	pthread_mutex_lock(&args_philo->counting);
 	if (args_philo->nb_eat > 0)
 		args_philo->nb_eat -= 1;
+	pthread_mutex_unlock(&args_philo->counting);
 	ft_usleep(args_philo->time_eat);
 	//usleep(args_philo->time_eat * 1000);
 	pthread_mutex_unlock(args_philo->own_fork);
@@ -136,12 +150,28 @@ int	check_own_death(t_philo *philo)
 	struct timeval tv;
 
 	gettimeofday(&tv, NULL);
+	pthread_mutex_lock(&philo->updating);
 	if ((1000 * tv.tv_sec + tv.tv_usec / 1000) - philo->last_update > philo->time_die)
 	{
-		philo->is_dead = 1;
+		pthread_mutex_unlock(&philo->updating);
 		return (1);
 	}
+	pthread_mutex_unlock(&philo->updating);
 	return (0);
+}
+
+int	vitals_check(t_philo *philo)
+{
+	int	i;
+
+	i = 0;
+	pthread_mutex_lock(&philo->death_check);
+	pthread_mutex_lock(&philo->counting);
+	if (philo->is_dead == 1 || philo->nb_eat == 0)
+		i = 1;
+	pthread_mutex_unlock(&philo->death_check);
+	pthread_mutex_unlock(&philo->counting);
+	return (i);
 }
 
 void	*start_routine(void *arg)
@@ -149,23 +179,23 @@ void	*start_routine(void *arg)
 	t_philo *a;
 
 	a = (t_philo *)arg;
-	if ((a->philo_seat + 1) % 2)
+	if ((a->philo_seat) % 2 == 0)
 		usleep(1500);
-	while (a->is_dead != 1 && a->nb_eat != 0)
+	while (1)
 	{
-		if (a->is_dead == 1 || a->nb_eat == 0)
+		if (vitals_check(a) == 1)
 			return (NULL);
 		take_fork(a);
 	//	printf("%d\t", 1);
-		if (a->is_dead == 1 || a->nb_eat == 0)
+		if (vitals_check(a) == 1)
 			return (NULL);
 		eating(a);
 	//	printf("%d\t", 2);
-		if (a->is_dead == 1 || a->nb_eat == 0)
+		if (vitals_check(a) == 1)
 			return (NULL);
 		sleeping(a);
 	//	printf("%d\t", 3);
-		if (a->is_dead == 1 || a->nb_eat == 0)
+		if (vitals_check(a) == 1)
 			return (NULL);
 		thinking(a);
 	//	printf("%d\t", 4);
@@ -189,6 +219,13 @@ void	create_mutex(t_arguments *args)
 	}
 	pthread_mutex_init(&args->printing, NULL);
 	args->mutexes = mutex;
+}
+
+void	create_death_count_update_mutexes(t_philo *philo)
+{
+	pthread_mutex_init(&philo->death_check, NULL);
+	pthread_mutex_init(&philo->counting, NULL);
+	pthread_mutex_init(&philo->updating, NULL);
 }
 
 void	create_philos(t_arguments *args)
@@ -219,6 +256,7 @@ void	create_philos(t_arguments *args)
 		philos[i].last_update = 1000 * tv.tv_sec + tv.tv_usec / 1000;
 		philos[i].is_dead = 0;
 		philos[i].printing = args->printing;
+		create_death_count_update_mutexes(&philos[i]);
 		i++;
 	}
 	args->philos = philos;
@@ -235,8 +273,10 @@ int	count_eat(t_arguments *args)
 		return (0);
 	while (i < args->nb_philo)
 	{
-		if (args->philos[i].nb_eat == 0)
-			j = j + 1;
+		pthread_mutex_lock(&args->philos[i].counting);
+			if (args->philos[i].nb_eat == 0)
+				j = j + 1;
+		pthread_mutex_unlock(&args->philos[i].counting);
 		i++;
 	}
 	if (j == args->nb_philo)
@@ -265,7 +305,9 @@ int	check_deaths(t_arguments *args)
 			j = 0;
 			while (j < args->nb_philo)
 			{
+				pthread_mutex_lock(&args->philos[j].death_check);
 				args->philos[j].is_dead = 1;
+				pthread_mutex_unlock(&args->philos[j].death_check);
 				j++;
 			}
 			starved(&args->philos[i]);
@@ -274,61 +316,6 @@ int	check_deaths(t_arguments *args)
 		i++;
 	}
 	return (0);
-}
-
-void	*monitor_deaths(void *check)
-{
-	t_arguments	*args;
-	int	i;
-	int	j;
-
-	args = (t_arguments *)check;
-	//printf("%d\n", 1);
-	while (1)
-	{
-		i = 0;
-		while (i < args->nb_philo)
-		{	
-			//printf("%d\n", 2);
-			if (args->philos[i].is_dead == 1)
-			{
-				//printf("%d\n", 3);
-				j = 0;
-				while (j < args->nb_philo)
-				{
-					args->philos[j].is_dead = 1;
-					j++;
-				}
-				starved(&args->philos[i]);
-				return (NULL);
-			}
-			i++;
-		}
-	}
-	return (NULL);
-}
-
-void	*monitor_eat(void *count)
-{
-	t_arguments	*args;
-	int	i;
-	int	j;
-
-	args = (t_arguments *)count;
-	while (1)
-	{
-		i = 0;
-		j = 0;
-		while (i < args->nb_philo)
-			{
-			if (args->philos[i].nb_eat == 0)
-				j = j + 1;
-			i++;
-		}
-		if (j == args->nb_philo)
-			return (NULL);
-	}
-	return (NULL);
 }
 
 void	create_threads(t_arguments *args)
@@ -361,6 +348,7 @@ int	main(int argc, char **argv)
 {
 	int			nb_arg;
 	int			i;
+	//int			b;
 	t_arguments args;
 	struct timeval tv;
 
@@ -374,6 +362,7 @@ int	main(int argc, char **argv)
 	args.big_bang_time = 1000 * tv.tv_sec + tv.tv_usec / 1000;
 	create_philos(&args);
 	create_threads(&args);
+	//b = 0;
 	while (1)
  	{
 		if (check_deaths(&args) == 1)
@@ -387,8 +376,8 @@ int	main(int argc, char **argv)
 			while (i < args.nb_philo)
 			{
 				//printf("join\t");
-			//	pthread_join(args.threads[i], NULL);
-				pthread_detach(args.threads[i]);
+				pthread_join(args.threads[i], NULL);
+			//	pthread_detach(args.threads[i]);
 				//printf("join2\t");
 				i++;
 			}
@@ -396,7 +385,18 @@ int	main(int argc, char **argv)
 			while (i < args.nb_philo)
 			{
 				//printf("mutex\t");
+				pthread_mutex_lock(&args.mutexes[i]);
+				pthread_mutex_unlock(&args.mutexes[i]);
 				pthread_mutex_destroy(&args.mutexes[i]);
+				pthread_mutex_lock(&args.philos[i].death_check);
+				pthread_mutex_unlock(&args.philos[i].death_check);
+				pthread_mutex_destroy(&args.philos[i].death_check);
+				pthread_mutex_lock(&args.philos[i].counting);
+				pthread_mutex_unlock(&args.philos[i].counting);
+				pthread_mutex_destroy(&args.philos[i].counting);
+				pthread_mutex_lock(&args.philos[i].updating);
+				pthread_mutex_unlock(&args.philos[i].updating);
+				pthread_mutex_destroy(&args.philos[i].updating);
 				i++;
 			}
 			pthread_mutex_unlock(&args.printing);
