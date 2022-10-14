@@ -63,34 +63,63 @@ void	ft_usleep(int time_ms)
 	}
 }
 
-void	take_fork(t_philo *args_philo)
+void	right_fork(t_philo *args_philo, int fork)
 {
 	struct timeval tv;
 
 	gettimeofday(&tv, NULL);
-	if (((args_philo->philo_seat % 2) == 1) || (args_philo->philo_seat == args_philo->nb_philo - 1))
-	{
-		pthread_mutex_lock(args_philo->right_fork);
-		pthread_mutex_lock(args_philo->own_fork);
-	}
-	else
-	{
-		pthread_mutex_lock(args_philo->own_fork);
-	//if (args_philo->nb_philo > 1)
-		pthread_mutex_lock(args_philo->right_fork);
-	}
-	pthread_mutex_lock(&args_philo->printing);
+		pthread_mutex_lock(&args_philo->printing);
 	pthread_mutex_lock(&args_philo->death_check);
 	if (args_philo->is_dead == 0)
-		printf("%ld %d has taken a fork\n", (1000 * tv.tv_sec + tv.tv_usec / 1000) - args_philo->zero_time, args_philo->philo_seat);
+		printf("%ld %d has taken right fork\n", (1000 * tv.tv_sec + tv.tv_usec / 1000) - args_philo->zero_time, args_philo->philo_seat);
+	else
+	{
+		if (fork == 2)
+			pthread_mutex_unlock(args_philo->own_fork);
+		//if (args_philo->nb_philo > 1)
+		pthread_mutex_unlock(args_philo->right_fork);
+	}
+	pthread_mutex_unlock(&args_philo->death_check);
+	pthread_mutex_unlock(&args_philo->printing);
+}
+
+void	own_fork(t_philo *args_philo, int fork)
+{
+	struct timeval tv;
+
+	gettimeofday(&tv, NULL);
+		pthread_mutex_lock(&args_philo->printing);
+	pthread_mutex_lock(&args_philo->death_check);
+	if (args_philo->is_dead == 0)
+		printf("%ld %d has taken own fork\n", (1000 * tv.tv_sec + tv.tv_usec / 1000) - args_philo->zero_time, args_philo->philo_seat);
 	else
 	{
 		pthread_mutex_unlock(args_philo->own_fork);
 		//if (args_philo->nb_philo > 1)
+		if (fork == 2)
 			pthread_mutex_unlock(args_philo->right_fork);
 	}
 	pthread_mutex_unlock(&args_philo->death_check);
 	pthread_mutex_unlock(&args_philo->printing);
+}
+
+void	take_fork(t_philo *args_philo)
+{
+	if (((args_philo->philo_seat % 2) == 0) && (args_philo->philo_seat + 1  != args_philo->nb_philo - 1))
+	{
+		pthread_mutex_lock(args_philo->right_fork);
+		right_fork(args_philo, 1);
+		pthread_mutex_lock(args_philo->own_fork);
+		own_fork(args_philo, 2);
+	}
+	else
+	{
+		pthread_mutex_lock(args_philo->own_fork);
+		own_fork(args_philo, 1);
+	//if (args_philo->nb_philo > 1)
+		pthread_mutex_lock(args_philo->right_fork);
+		right_fork(args_philo, 2);
+	}
 }
 
 void	eating(t_philo *args_philo)
@@ -179,7 +208,7 @@ void	*start_routine(void *arg)
 	t_philo *a;
 
 	a = (t_philo *)arg;
-	if ((a->philo_seat) % 2 == 0)
+	if ((a->philo_seat) % 2 == 1 || a->philo_seat == a->nb_philo - 1)
 		usleep(1500);
 	while (1)
 	{
