@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   philo.h                                            :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: rgarcia <marvin@42.fr>                     +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2022/10/17 16:14:55 by rgarcia           #+#    #+#             */
+/*   Updated: 2022/10/17 16:51:40 by rgarcia          ###   ########lyon.fr   */
+/*                                                                            */
+/* ************************************************************************** */
+
 #ifndef PHILO_H
 # define PHILO_H
 # include <stdlib.h>
@@ -16,10 +28,7 @@ typedef struct s_philo
     long    last_update;
     int is_dead;
     long    zero_time;
-    pthread_mutex_t counting;
-    pthread_mutex_t death_check;
     pthread_mutex_t updating;
-    pthread_mutex_t printing;
     pthread_mutex_t *own_fork;
     pthread_mutex_t *right_fork;
 }   t_philo;
@@ -32,7 +41,7 @@ typedef struct s_arguments
     int time_sleep;
     int nb_eat;
     long big_bang_time;
-    pthread_mutex_t printing;
+    pthread_mutex_t updating;
     pthread_mutex_t *mutexes;
     pthread_t       *threads;
     t_philo         *philos;
@@ -41,7 +50,7 @@ typedef struct s_arguments
 int	ft_atoi(const char *str);
 void	create_threads(t_arguments *args);
 void	create_philos(t_arguments *args);
-void	create_death_count_update_mutexes(t_philo *philo);
+void	create_philos_updates(t_arguments *args, t_philo *philo, int i);
 void	create_mutex(t_arguments *args);
 void	*start_routine(void *arg);
 int vitals_check(t_philo *philo);

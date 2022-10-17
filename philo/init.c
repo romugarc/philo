@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   init.c                                             :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: rgarcia <marvin@42.fr>                     +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2022/10/17 16:14:41 by rgarcia           #+#    #+#             */
+/*   Updated: 2022/10/17 16:54:57 by rgarcia          ###   ########lyon.fr   */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "philo.h"
 
 void	create_mutex(t_arguments *args)
@@ -14,20 +26,24 @@ void	create_mutex(t_arguments *args)
 		pthread_mutex_init(&mutex[i], NULL);
 		i++;
 	}
-	pthread_mutex_init(&args->printing, NULL);
+	pthread_mutex_init(&args->updating, NULL);
 	args->mutexes = mutex;
 }
 
-void	create_death_count_update_mutexes(t_philo *philo)
+void	create_philos_updates(t_arguments *args, t_philo *philos, int i)
 {
-	pthread_mutex_init(&philo->death_check, NULL);
-	pthread_mutex_init(&philo->counting, NULL);
-	pthread_mutex_init(&philo->updating, NULL);
+	struct timeval tv;
+
+	philos[i].zero_time = args->big_bang_time;
+	gettimeofday(&tv, NULL);
+	philos[i].last_update = 1000 * tv.tv_sec + tv.tv_usec / 1000;
+	philos[i].is_dead = 0;
+	philos[i].updating = args->updating;
+	pthread_mutex_init(&philos->updating, NULL);
 }
 
 void	create_philos(t_arguments *args)
 {
-	struct timeval tv;
 	t_philo *philos;
 	int		i;
 
@@ -48,12 +64,7 @@ void	create_philos(t_arguments *args)
 			philos[i].right_fork = &args->mutexes[i - 1];
 		else
 			philos[i].right_fork = &args->mutexes[args->nb_philo - 1];
-		philos[i].zero_time = args->big_bang_time;
-		gettimeofday(&tv, NULL);
-		philos[i].last_update = 1000 * tv.tv_sec + tv.tv_usec / 1000;
-		philos[i].is_dead = 0;
-		philos[i].printing = args->printing;
-		create_death_count_update_mutexes(&philos[i]);
+		create_philos_updates(args, philos, i);
 		i++;
 	}
 	args->philos = philos;

@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   main.c                                             :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: rgarcia <marvin@42.fr>                     +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2022/10/17 16:14:48 by rgarcia           #+#    #+#             */
+/*   Updated: 2022/10/17 16:35:44 by rgarcia          ###   ########lyon.fr   */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include "philo.h"
@@ -57,7 +69,7 @@ void	ft_usleep(int time_ms)
 	delayed_time = start_time;
 	while (delayed_time - start_time < time_ms)
 	{
-		usleep(time_ms / 10);
+		usleep(600);
 		gettimeofday(&tv, NULL);
 		delayed_time = 1000 * tv.tv_sec + tv.tv_usec / 1000;
 	}
@@ -81,6 +93,7 @@ int	main(int argc, char **argv)
 	create_threads(&args);
 	while (1)
  	{
+		usleep(2000);
 		if (check_deaths(&args) == 1)
 		{
 			end_routine(&args);
