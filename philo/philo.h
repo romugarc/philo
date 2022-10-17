@@ -35,11 +35,25 @@ typedef struct s_arguments
     pthread_mutex_t printing;
     pthread_mutex_t *mutexes;
     pthread_t       *threads;
-//    pthread_t       monitor;
- //   pthread_t       eats;
     t_philo         *philos;
 }   t_arguments;
 
 int	ft_atoi(const char *str);
+void	create_threads(t_arguments *args);
+void	create_philos(t_arguments *args);
+void	create_death_count_update_mutexes(t_philo *philo);
+void	create_mutex(t_arguments *args);
+void	*start_routine(void *arg);
+int vitals_check(t_philo *philo);
+int	check_deaths(t_arguments *args);
+int	count_eat(t_arguments *args);
+int	check_time_death(t_philo *philo);
+void	take_fork(t_philo *args_philo);
+void	print_fork(t_philo *args_philo, int fork);
+void	eating(t_philo *args_philo);
+void	sleeping(t_philo *args_philo);
+void	thinking(t_philo *args_philo);
+void	starved(t_philo *dead_philo);
+void	ft_usleep(int time_ms);
 
 #endif
