@@ -66,7 +66,6 @@ void	ft_usleep(int time_ms)
 int	main(int argc, char **argv)
 {
 	int			nb_arg;
-	int			i;
 	t_arguments args;
 	struct timeval tv;
 
@@ -84,35 +83,7 @@ int	main(int argc, char **argv)
  	{
 		if (check_deaths(&args) == 1)
 		{
-			pthread_mutex_lock(&args.printing);
-			i = 0;
-			while (i < args.nb_philo)
-			{
-				pthread_join(args.threads[i], NULL);
-				i++;
-			}
-			i = 0;
-			while (i < args.nb_philo)
-			{
-				pthread_mutex_lock(&args.mutexes[i]);
-				pthread_mutex_unlock(&args.mutexes[i]);
-				pthread_mutex_destroy(&args.mutexes[i]);
-				pthread_mutex_lock(&args.philos[i].death_check);
-				pthread_mutex_unlock(&args.philos[i].death_check);
-				pthread_mutex_destroy(&args.philos[i].death_check);
-				pthread_mutex_lock(&args.philos[i].counting);
-				pthread_mutex_unlock(&args.philos[i].counting);
-				pthread_mutex_destroy(&args.philos[i].counting);
-				pthread_mutex_lock(&args.philos[i].updating);
-				pthread_mutex_unlock(&args.philos[i].updating);
-				pthread_mutex_destroy(&args.philos[i].updating);
-				i++;
-			}
-			pthread_mutex_unlock(&args.printing);
-			pthread_mutex_destroy(&args.printing);
-			free(args.philos);
-			free(args.mutexes);
-			free(args.threads);
+			end_routine(&args);
 			return (0);
 		}
 	}

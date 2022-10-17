@@ -55,5 +55,8 @@ void	sleeping(t_philo *args_philo);
 void	thinking(t_philo *args_philo);
 void	starved(t_philo *dead_philo);
 void	ft_usleep(int time_ms);
+void	end_routine(t_arguments *args);
+void	free_all(t_arguments *args);
+void	destroy_mutex(t_arguments *args);
 
 #endif
