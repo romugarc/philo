@@ -6,7 +6,7 @@
 /*   By: rgarcia <marvin@42.fr>                     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/10/17 16:13:59 by rgarcia           #+#    #+#             */
-/*   Updated: 2022/10/18 18:16:39 by rgarcia          ###   ########lyon.fr   */
+/*   Updated: 2022/10/18 18:33:40 by rgarcia          ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,10 +52,10 @@ int	count_eat(t_arguments *args)
 		return (0);
 	while (i < args->nb_philo)
 	{
-		pthread_mutex_lock(&args->updating);
+		pthread_mutex_lock(&args->philos[i].updating);
 		if (args->philos[i].nb_eat <= 0)
 			j = j + 1;
-		pthread_mutex_unlock(&args->updating);
+		pthread_mutex_unlock(&args->philos[i].updating);
 		i++;
 	}
 	if (j == args->nb_philo)
