@@ -6,7 +6,7 @@
 /*   By: rgarcia <marvin@42.fr>                     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/10/18 11:34:18 by rgarcia           #+#    #+#             */
-/*   Updated: 2022/10/18 16:10:27 by rgarcia          ###   ########lyon.fr   */
+/*   Updated: 2022/10/18 17:04:20 by rgarcia          ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,8 +18,8 @@ void	print_fork(t_philo *args_philo, int fork)
 {
 	struct timeval	tv;
 
-	gettimeofday(&tv, NULL);
 	pthread_mutex_lock(&args_philo->updating);
+	gettimeofday(&tv, NULL);
 	if (args_philo->is_dead == 0)
 		printf("%ld %d has taken a fork\n", \
 			(1000 * tv.tv_sec + tv.tv_usec / 1000) - \
@@ -64,8 +64,8 @@ void	eating(t_philo *args_philo)
 {
 	struct timeval	tv;
 
-	gettimeofday(&tv, NULL);
 	pthread_mutex_lock(&args_philo->updating);
+	gettimeofday(&tv, NULL);
 	args_philo->last_update = 1000 * tv.tv_sec + tv.tv_usec / 1000;
 	printf("%ld %d is eating\n", (1000 * tv.tv_sec + tv.tv_usec / 1000) - \
 		args_philo->zero_time, args_philo->philo_seat);
@@ -81,8 +81,8 @@ void	sleeping(t_philo *args_philo)
 {
 	struct timeval	tv;
 
-	gettimeofday(&tv, NULL);
 	pthread_mutex_lock(&args_philo->updating);
+	gettimeofday(&tv, NULL);
 	printf("%ld %d is sleeping\n", (1000 * tv.tv_sec + tv.tv_usec / 1000) - \
 		args_philo->zero_time, args_philo->philo_seat);
 	pthread_mutex_unlock(&args_philo->updating);
@@ -93,8 +93,8 @@ void	thinking(t_philo *args_philo)
 {
 	struct timeval	tv;
 
-	gettimeofday(&tv, NULL);
 	pthread_mutex_lock(&args_philo->updating);
+	gettimeofday(&tv, NULL);
 	printf("%ld %d is thinking\n", (1000 * tv.tv_sec + tv.tv_usec / 1000) - \
 		args_philo->zero_time, args_philo->philo_seat);
 	pthread_mutex_unlock(&args_philo->updating);
