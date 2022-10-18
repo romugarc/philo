@@ -6,7 +6,7 @@
 /*   By: rgarcia <marvin@42.fr>                     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/10/17 16:14:41 by rgarcia           #+#    #+#             */
-/*   Updated: 2022/10/17 16:54:57 by rgarcia          ###   ########lyon.fr   */
+/*   Updated: 2022/10/18 11:29:35 by rgarcia          ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,7 +14,7 @@
 
 void	create_mutex(t_arguments *args)
 {
-	pthread_mutex_t *mutex;
+	pthread_mutex_t	*mutex;
 	int				i;
 
 	mutex = malloc(sizeof(pthread_mutex_t) * args->nb_philo);
@@ -32,7 +32,7 @@ void	create_mutex(t_arguments *args)
 
 void	create_philos_updates(t_arguments *args, t_philo *philos, int i)
 {
-	struct timeval tv;
+	struct timeval	tv;
 
 	philos[i].zero_time = args->big_bang_time;
 	gettimeofday(&tv, NULL);
@@ -44,7 +44,7 @@ void	create_philos_updates(t_arguments *args, t_philo *philos, int i)
 
 void	create_philos(t_arguments *args)
 {
-	t_philo *philos;
+	t_philo	*philos;
 	int		i;
 
 	philos = malloc(sizeof(t_philo) * args->nb_philo);
@@ -72,8 +72,7 @@ void	create_philos(t_arguments *args)
 
 void	create_threads(t_arguments *args)
 {
-
-	pthread_t 	*thread;
+	pthread_t	*thread;
 	int			i;
 
 	thread = malloc(sizeof(pthread_t) * args->nb_philo);
@@ -82,7 +81,8 @@ void	create_threads(t_arguments *args)
 	i = 0;
 	while (i < args->nb_philo)
 	{
-		pthread_create(&thread[i], NULL, start_routine, (void *)&args->philos[i]);
+		pthread_create(&thread[i], NULL, start_routine, \
+			(void *)&args->philos[i]);
 		i++;
 	}
 	args->threads = thread;

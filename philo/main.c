@@ -6,7 +6,7 @@
 /*   By: rgarcia <marvin@42.fr>                     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/10/17 16:14:48 by rgarcia           #+#    #+#             */
-/*   Updated: 2022/10/17 17:15:26 by rgarcia          ###   ########lyon.fr   */
+/*   Updated: 2022/10/18 14:28:35 by rgarcia          ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,7 +39,7 @@ int	parse_error(int argc, char **argv)
 	return (0);
 }
 
-int parse_args(int nb_arg, char** argv, t_arguments *args)
+int	parse_args(int nb_arg, char **argv, t_arguments *args)
 {
 	args->nb_philo = ft_atoi(argv[1]);
 	args->time_die = ft_atoi(argv[2]);
@@ -60,9 +60,9 @@ int parse_args(int nb_arg, char** argv, t_arguments *args)
 
 void	ft_usleep(int time_ms)
 {
-	struct timeval tv;
-	long	start_time;
-	long	delayed_time;
+	struct timeval	tv;
+	long			start_time;
+	long			delayed_time;
 
 	gettimeofday(&tv, NULL);
 	start_time = 1000 * tv.tv_sec + tv.tv_usec / 1000;
@@ -77,9 +77,9 @@ void	ft_usleep(int time_ms)
 
 int	main(int argc, char **argv)
 {
-	int			nb_arg;
-	t_arguments args;
-	struct timeval tv;
+	int				nb_arg;
+	t_arguments		args;
+	struct timeval	tv;
 
 	if (parse_error(argc, argv) == 1)
 		return (0);
@@ -92,7 +92,7 @@ int	main(int argc, char **argv)
 	create_philos(&args);
 	create_threads(&args);
 	while (1)
- 	{
+	{
 		usleep(2000);
 		if (check_deaths(&args) == 1)
 		{
