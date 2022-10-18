@@ -6,7 +6,7 @@
 /*   By: rgarcia <marvin@42.fr>                     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/10/17 16:24:56 by rgarcia           #+#    #+#             */
-/*   Updated: 2022/10/18 15:17:19 by rgarcia          ###   ########lyon.fr   */
+/*   Updated: 2022/10/18 18:09:59 by rgarcia          ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,7 +18,7 @@ int	vitals_check(t_philo *philo)
 
 	i = 0;
 	pthread_mutex_lock(&philo->updating);
-	if (philo->is_dead == 1 || philo->nb_eat == 0)
+	if (philo->is_dead == 1)
 	{
 		i = 1;
 	}

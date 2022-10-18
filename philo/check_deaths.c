@@ -6,7 +6,7 @@
 /*   By: rgarcia <marvin@42.fr>                     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/10/17 16:13:59 by rgarcia           #+#    #+#             */
-/*   Updated: 2022/10/17 17:26:18 by rgarcia          ###   ########lyon.fr   */
+/*   Updated: 2022/10/18 18:16:39 by rgarcia          ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,10 +52,10 @@ int	count_eat(t_arguments *args)
 		return (0);
 	while (i < args->nb_philo)
 	{
-		pthread_mutex_lock(&args->philos[i].updating);
-		if (args->philos[i].nb_eat == 0)
+		pthread_mutex_lock(&args->updating);
+		if (args->philos[i].nb_eat <= 0)
 			j = j + 1;
-		pthread_mutex_unlock(&args->philos[i].updating);
+		pthread_mutex_unlock(&args->updating);
 		i++;
 	}
 	if (j == args->nb_philo)
@@ -63,10 +63,23 @@ int	count_eat(t_arguments *args)
 	return (0);
 }
 
+void	everyone_dies(t_arguments *args)
+{
+	int	j;
+
+	j = 0;
+	while (j < args->nb_philo)
+	{
+		pthread_mutex_lock(&args->philos[j].updating);
+		args->philos[j].is_dead = 1;
+		pthread_mutex_unlock(&args->philos[j].updating);
+		j++;
+	}
+}
+
 int	check_deaths(t_arguments *args)
 {
 	int	i;
-	int	j;
 
 	i = -1;
 	while (i++ < args->nb_philo - 1)
@@ -74,17 +87,14 @@ int	check_deaths(t_arguments *args)
 		if (args->nb_eat > 0)
 		{
 			if (count_eat(args) == 1)
+			{
+				everyone_dies(args);
 				return (1);
+			}
 		}
 		if (check_time_death(&args->philos[i]) == 1)
 		{
-			j = -1;
-			while (j++ < args->nb_philo - 1)
-			{
-				pthread_mutex_lock(&args->philos[j].updating);
-				args->philos[j].is_dead = 1;
-				pthread_mutex_unlock(&args->philos[j].updating);
-			}
+			everyone_dies(args);
 			starved(&args->philos[i]);
 			return (1);
 		}
