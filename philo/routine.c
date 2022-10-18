@@ -6,7 +6,7 @@
 /*   By: rgarcia <marvin@42.fr>                     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/10/18 11:34:18 by rgarcia           #+#    #+#             */
-/*   Updated: 2022/10/18 14:11:34 by rgarcia          ###   ########lyon.fr   */
+/*   Updated: 2022/10/18 16:02:31 by rgarcia          ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,8 +26,9 @@ void	print_fork(t_philo *args_philo, int fork)
 			args_philo->zero_time, args_philo->philo_seat);
 	else
 	{
-		pthread_mutex_unlock(args_philo->own_fork);
-		if (fork == 2)
+		if (fork != 2)
+			pthread_mutex_unlock(args_philo->own_fork);
+		if (fork != 1)
 			pthread_mutex_unlock(args_philo->right_fork);
 	}
 	pthread_mutex_unlock(&args_philo->updating);
@@ -45,14 +46,16 @@ int	take_fork(t_philo *args_philo)
 		(args_philo->philo_seat + 1 != args_philo->nb_philo - 1))
 	{
 		pthread_mutex_lock(args_philo->right_fork);
-		pthread_mutex_lock(args_philo->own_fork);
 		print_fork(args_philo, 2);
+		pthread_mutex_lock(args_philo->own_fork);
+		print_fork(args_philo, 3);
 	}
 	else
 	{
 		pthread_mutex_lock(args_philo->own_fork);
+		print_fork(args_philo, 1);
 		pthread_mutex_lock(args_philo->right_fork);
-		print_fork(args_philo, 2);
+		print_fork(args_philo, 3);
 	}
 	return (2);
 }
