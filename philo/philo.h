@@ -6,7 +6,7 @@
 /*   By: rgarcia <marvin@42.fr>                     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/10/17 16:14:55 by rgarcia           #+#    #+#             */
-/*   Updated: 2022/10/18 13:44:59 by rgarcia          ###   ########lyon.fr   */
+/*   Updated: 2022/10/20 09:44:13 by rgarcia          ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -56,8 +56,7 @@ void	create_mutex(t_arguments *args);
 void	*start_routine(void *arg);
 int		vitals_check(t_philo *philo);
 int		check_deaths(t_arguments *args);
-int		count_eat(t_arguments *args);
-int		check_time_death(t_philo *philo);
+int		check_time_deaths(t_philo *philo, int args_nb_eat, int *j);
 int		take_fork(t_philo *args_philo);
 void	print_fork(t_philo *args_philo, int fork);
 void	eating(t_philo *args_philo);
