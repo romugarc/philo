@@ -6,7 +6,7 @@
 /*   By: rgarcia <marvin@42.fr>                     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/10/17 16:14:48 by rgarcia           #+#    #+#             */
-/*   Updated: 2022/10/20 08:43:55 by rgarcia          ###   ########lyon.fr   */
+/*   Updated: 2022/10/24 18:00:31 by rgarcia          ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -75,28 +75,48 @@ void	ft_usleep(int time_ms)
 	}
 }
 
+int	create_everything(t_arguments *args)
+{
+	struct timeval	tv;
+
+	if (create_mutex(args) == 1)
+		return (1);
+	gettimeofday(&tv, NULL);
+	args->big_bang_time = 1000 * tv.tv_sec + tv.tv_usec / 1000;
+	if (create_philos(args) == 1)
+	{
+		end_routine(args, 1);
+		free(args->mutexes);
+		return (1);
+	}
+	if (create_threads(args) == 1)
+	{
+		end_routine(args, 2);
+		free(args->mutexes);
+		free(args->philos);
+		return (1);
+	}
+	return (0);
+}
+
 int	main(int argc, char **argv)
 {
 	int				nb_arg;
 	t_arguments		args;
-	struct timeval	tv;
 
 	if (parse_error(argc, argv) == 1)
 		return (0);
 	nb_arg = argc - 1;
 	if (parse_args(nb_arg, argv, &args) == 1)
 		return (0);
-	create_mutex(&args);
-	gettimeofday(&tv, NULL);
-	args.big_bang_time = 1000 * tv.tv_sec + tv.tv_usec / 1000;
-	create_philos(&args);
-	create_threads(&args);
+	if (create_everything(&args) == 1)
+		return (0);
 	while (1)
 	{
 		usleep(2000);
 		if (check_deaths(&args) == 1)
 		{
-			end_routine(&args);
+			end_routine(&args, 0);
 			return (0);
 		}
 	}
