@@ -6,7 +6,7 @@
 /*   By: rgarcia <marvin@42.fr>                     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/10/17 16:14:41 by rgarcia           #+#    #+#             */
-/*   Updated: 2022/10/24 17:54:24 by rgarcia          ###   ########lyon.fr   */
+/*   Updated: 2022/10/25 15:16:56 by rgarcia          ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,7 +43,7 @@ void	create_philos_updates(t_arguments *args, t_philo *philos, int i)
 	philos[i].time_eat = args->time_eat;
 	philos[i].time_sleep = args->time_sleep;
 	philos[i].nb_eat = args->nb_eat;
-	philos[i].philo_seat = i;
+	philos[i].philo_seat = i + 1;
 	philos[i].own_fork = &args->mutexes[i];
 	philos[i].zero_time = args->big_bang_time;
 	gettimeofday(&tv, NULL);

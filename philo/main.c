@@ -6,7 +6,7 @@
 /*   By: rgarcia <marvin@42.fr>                     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/10/17 16:14:48 by rgarcia           #+#    #+#             */
-/*   Updated: 2022/10/24 18:00:31 by rgarcia          ###   ########lyon.fr   */
+/*   Updated: 2022/10/25 15:21:48 by rgarcia          ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,17 +23,17 @@ int	parse_error(int argc, char **argv)
 		return (1);
 	i = 1;
 	j = 0;
-	while (argv[i] != NULL)
+	while (i < argc)
 	{
 		j = 0;
 		while (argv[i][j] != '\0')
 		{
 			if (argv[i][j] < '0' || argv[i][j] > '9')
-			{
 				return (1);
-			}
 			j++;
 		}
+		if (j == 0)
+			return (1);
 		i++;
 	}
 	return (0);
