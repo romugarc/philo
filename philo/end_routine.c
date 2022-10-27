@@ -6,7 +6,7 @@
 /*   By: rgarcia <marvin@42.fr>                     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/10/17 16:14:08 by rgarcia           #+#    #+#             */
-/*   Updated: 2022/10/24 17:47:33 by rgarcia          ###   ########lyon.fr   */
+/*   Updated: 2022/10/27 18:27:23 by rgarcia          ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -53,8 +53,11 @@ void	end_routine(t_arguments *args, int err_state)
 		}
 	}
 	destroy_mutex(args, err_state);
-	pthread_mutex_unlock(&args->updating);
-	pthread_mutex_destroy(&args->updating);
+	if (err_state != 3)
+	{
+		pthread_mutex_unlock(&args->updating);
+		pthread_mutex_destroy(&args->updating);
+	}
 	if (err_state == 0)
 		free_all(args);
 }

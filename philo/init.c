@@ -6,7 +6,7 @@
 /*   By: rgarcia <marvin@42.fr>                     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/10/17 16:14:41 by rgarcia           #+#    #+#             */
-/*   Updated: 2022/10/25 15:16:56 by rgarcia          ###   ########lyon.fr   */
+/*   Updated: 2022/10/27 18:28:22 by rgarcia          ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,17 +20,25 @@ int	create_mutex(t_arguments *args)
 	mutex = malloc(sizeof(pthread_mutex_t) * args->nb_philo);
 	if (!mutex)
 	{
-		free(mutex);
+		args->mutexes = mutex;
 		return (1);
 	}
-	i = 0;
-	while (i < args->nb_philo)
+	i = -1;
+	while (i++ < args->nb_philo - 1)
 	{
-		pthread_mutex_init(&mutex[i], NULL);
-		i++;
+		if (pthread_mutex_init(&mutex[i], NULL) != 0)
+		{
+			args->mutexes = mutex;
+			return (1);
+		}
 	}
-	pthread_mutex_init(&args->updating, NULL);
+	if (pthread_mutex_init(&args->updating, NULL) != 0)
+	{
+		args->mutexes = mutex;
+		return (2);
+	}
 	args->mutexes = mutex;
+	return (2);
 	return (0);
 }
 
@@ -50,7 +58,6 @@ void	create_philos_updates(t_arguments *args, t_philo *philos, int i)
 	philos[i].last_update = 1000 * tv.tv_sec + tv.tv_usec / 1000;
 	philos[i].is_dead = 0;
 	philos[i].updating = args->updating;
-	pthread_mutex_init(&philos->updating, NULL);
 }
 
 int	create_philos(t_arguments *args)
@@ -68,6 +75,8 @@ int	create_philos(t_arguments *args)
 	while (i < args->nb_philo)
 	{
 		create_philos_updates(args, philos, i);
+		if (pthread_mutex_init(&philos->updating, NULL) != 0)
+			return (1);
 		if (i > 0)
 			philos[i].right_fork = &args->mutexes[i - 1];
 		else

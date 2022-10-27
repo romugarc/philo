@@ -6,7 +6,7 @@
 /*   By: rgarcia <marvin@42.fr>                     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/10/17 16:14:48 by rgarcia           #+#    #+#             */
-/*   Updated: 2022/10/25 15:21:48 by rgarcia          ###   ########lyon.fr   */
+/*   Updated: 2022/10/27 18:11:29 by rgarcia          ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -79,8 +79,12 @@ int	create_everything(t_arguments *args)
 {
 	struct timeval	tv;
 
-	if (create_mutex(args) == 1)
+	if (create_mutex(args) != 0)
+	{
+		destroy_mutex(args, 1);
+		free(args->mutexes);
 		return (1);
+	}
 	gettimeofday(&tv, NULL);
 	args->big_bang_time = 1000 * tv.tv_sec + tv.tv_usec / 1000;
 	if (create_philos(args) == 1)
