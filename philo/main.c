@@ -6,7 +6,7 @@
 /*   By: rgarcia <marvin@42.fr>                     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/10/17 16:14:48 by rgarcia           #+#    #+#             */
-/*   Updated: 2022/10/27 18:11:29 by rgarcia          ###   ########lyon.fr   */
+/*   Updated: 2022/10/28 15:47:29 by rgarcia          ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -78,28 +78,25 @@ void	ft_usleep(int time_ms)
 int	create_everything(t_arguments *args)
 {
 	struct timeval	tv;
+	int				err_state;
 
-	if (create_mutex(args) != 0)
-	{
-		destroy_mutex(args, 1);
-		free(args->mutexes);
+	err_state = create_mutex(args);
+	if (err_state == 1)
 		return (1);
-	}
+	else if (err_state == 2)
+		return (error_handler(args, err_state));
 	gettimeofday(&tv, NULL);
 	args->big_bang_time = 1000 * tv.tv_sec + tv.tv_usec / 1000;
-	if (create_philos(args) == 1)
-	{
-		end_routine(args, 1);
-		free(args->mutexes);
-		return (1);
-	}
-	if (create_threads(args) == 1)
-	{
-		end_routine(args, 2);
-		free(args->mutexes);
-		free(args->philos);
-		return (1);
-	}
+	err_state = create_philos(args);
+	if (err_state == 3)
+		return (error_handler(args, err_state));
+	else if (err_state == 4)
+		return (error_handler(args, err_state));
+	err_state = create_threads(args);
+	if (err_state == 5)
+		return (error_handler(args, err_state));
+	else if (err_state == 6)
+		return (error_handler(args, err_state));
 	return (0);
 }
 

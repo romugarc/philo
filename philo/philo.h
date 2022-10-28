@@ -6,7 +6,7 @@
 /*   By: rgarcia <marvin@42.fr>                     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/10/17 16:14:55 by rgarcia           #+#    #+#             */
-/*   Updated: 2022/10/24 17:47:35 by rgarcia          ###   ########lyon.fr   */
+/*   Updated: 2022/10/28 15:49:43 by rgarcia          ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -49,14 +49,18 @@ typedef struct s_arguments
 }	t_arguments;
 
 int		ft_atoi(const char *str);
+int		parse_error(int argc, char **argv);
+int		parse_args(int nb_arg, char **argv, t_arguments *args);
 int		create_threads(t_arguments *args);
 int		create_philos(t_arguments *args);
 void	create_philos_updates(t_arguments *args, t_philo *philo, int i);
 int		create_mutex(t_arguments *args);
+int		create_everything(t_arguments *args);
 void	*start_routine(void *arg);
 int		vitals_check(t_philo *philo);
 int		check_deaths(t_arguments *args);
 int		check_time_deaths(t_philo *philo, int args_nb_eat, int *j);
+void	everyone_dies(t_arguments *args);
 int		take_fork(t_philo *args_philo);
 void	print_fork(t_philo *args_philo, int fork);
 void	eating(t_philo *args_philo);
@@ -67,5 +71,6 @@ void	ft_usleep(int time_ms);
 void	end_routine(t_arguments *args, int err_state);
 void	free_all(t_arguments *args);
 void	destroy_mutex(t_arguments *args, int err_state);
+int		error_handler(t_arguments *args, int err_state);
 
 #endif
