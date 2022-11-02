@@ -6,13 +6,14 @@
 /*   By: rgarcia <marvin@42.fr>                     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/10/17 16:14:55 by rgarcia           #+#    #+#             */
-/*   Updated: 2022/10/28 15:49:43 by rgarcia          ###   ########lyon.fr   */
+/*   Updated: 2022/10/29 14:47:56 by rgarcia          ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef PHILO_H
 # define PHILO_H
 # include <stdlib.h>
+# include <string.h>
 # include <unistd.h>
 # include <pthread.h>
 # include <sys/time.h>
